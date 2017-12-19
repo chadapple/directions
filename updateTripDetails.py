@@ -6,11 +6,14 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 from datetime import datetime
+from datetime import timedelta 
 
 GMAPS_API_KEY_FILE='gmaps_api.key'
 SCOPES = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'RoadTrip'
+WORKBOOK_NAME = 'West Coast Trip Days'
+SHEET_NAME ='TripDReverseDay2Day'
 
 def get_credentials():
   """Gets valid user credentials from storage.
@@ -55,22 +58,33 @@ def main(argv):
   gkey = fo.readline()
   gkey = gkey.split("\n")[0]
   gmaps = googlemaps.Client(key=gkey)
-  sh = getSpreadsheet('West Coast Trip Days', 'Trip');
+  sh = getSpreadsheet(WORKBOOK_NAME,SHEET_NAME)
   records = sh.get_all_records()
   origin = None
-  row=3
+  departureDay = None
+  rowDest=1
+  rowOrigin=1
   for rec in records:
-    if(origin != None):
-      segmentTime, segmentDistance = getTripDetails(gmaps,origin,rec['Address'])
-      m, s = divmod(segmentTime, 60)
-      h, m = divmod(m, 60)
-      formattedTime = "%d hours, %02d minutes" % (h, m) 
-      formattedDist = "%d" % int(round(segmentDistance*0.00062137119223733)) 
-      print "%s => %s" % (formattedTime, rec['Address']) 
-      sh.update_cell(row, 4, formattedTime) 
-      sh.update_cell(row, 5, formattedDist) 
-      row += 1
-    origin=rec['Address']
+    rowDest += 1
+    if(rec['Address'] != ''):
+      if(origin == None):
+        departureDay = datetime.strptime(rec['Leave'],'%m/%d/%y')
+        rowOrigin=rowDest
+      else:
+        segmentTime, segmentDistance = getTripDetails(gmaps,origin,rec['Address'])
+        m, s = divmod(segmentTime, 60)
+        h, m = divmod(m, 60)
+        formattedTime = "%d hours, %02d minutes" % (h, m) 
+        formattedDist = "%d" % int(round(segmentDistance*0.00062137119223733)) 
+        print "%s => %s => %s" % (departureDay.strftime('%m/%d/%y'), formattedTime, rec['Address']) 
+        sh.update_cell(rowOrigin, 5, formattedTime) 
+        sh.update_cell(rowOrigin, 6, formattedDist) 
+        rowOrigin=rowDest
+        sh.update_cell(rowDest, 3, departureDay.strftime('%m/%d/%y')) 
+        if(rec['Days Stay'] != 'N/A'):
+          departureDay += timedelta(days=rec['Days Stay']) 
+          sh.update_cell(rowDest, 4, departureDay.strftime('%m/%d/%y')) 
+      origin=rec['Address']
 
 if __name__ == "__main__":
   main(sys.argv[1:])
