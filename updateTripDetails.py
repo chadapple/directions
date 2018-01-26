@@ -78,13 +78,13 @@ def main(argv):
         formattedDist = "%d" % int(round(segmentDistance*0.00062137119223733))
         print "%s => %s => %s" % (departureDay.strftime('%m/%d/%y'), formattedTime, rec['Address'])
         sys.stdout.flush()
-        sh.update_cell(rowOrigin, 5, formattedTime)
-        sh.update_cell(rowOrigin, 6, formattedDist)
+        sh.update_cell(rowOrigin, 6, formattedTime)
+        sh.update_cell(rowOrigin, 7, formattedDist)
         rowOrigin=rowDest
-        sh.update_cell(rowDest, 3, departureDay.strftime('%m/%d/%y'))
+        sh.update_cell(rowDest, 4, departureDay.strftime('%m/%d/%y'))
         if(rec['Days Stay'] != 'N/A'):
           departureDay += timedelta(days=rec['Days Stay'])
-          sh.update_cell(rowDest, 4, departureDay.strftime('%m/%d/%y'))
+          sh.update_cell(rowDest, 5, departureDay.strftime('%m/%d/%y'))
       origin=rec['Address']
 
 if __name__ == "__main__":
